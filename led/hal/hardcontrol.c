@@ -3,7 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <android/log.h>
- 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h> 
 #if 0
 typedef struct {
     char *name;          /* Java里调用的函数名 */
@@ -11,21 +14,27 @@ typedef struct {
     void *fnPtr;          /* C语言实现的本地函数 */
 } JNINativeMethod;
 #endif
-
+static jint fd;
 jint ledOpen(JNIEnv *env, jobject cls)
 {
 	__android_log_print(ANDROID_LOG_DEBUG, "LED", "native ledOpen ...");
-	return 0;
+	fd = open("/dev/leds", O_RDWR);
+	if(fd >= 0)
+		return 0;
+	else
+		return -1;
 }
 void ledClose(JNIEnv *env, jobject cls)
 {
 	__android_log_print(ANDROID_LOG_DEBUG, "LED", "native ledClose ...");
-
+	close(fd);
 }
 jint ledCtrl(JNIEnv *env, jobject cls, jint which, jint status)
 {
+	jint ret;
 	__android_log_print(ANDROID_LOG_DEBUG, "LED", "native ledCtrl which:%d  status:%d", which, status);
-	return 0;
+	ret = ioctl(fd, status, which);
+	return ret;
 }
 
 static const JNINativeMethod methods[] = {
